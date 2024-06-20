@@ -5,6 +5,10 @@
 #include <QVector>
 #include <QPushButton>
 
+#include <openssl/aes.h>
+#include <openssl/evp.h>
+#include <openssl/rand.h>
+
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class MainWindow;
@@ -26,11 +30,18 @@ private slots:
 private:
     Ui::MainWindow *ui;
 
+
+    QVector<QByteArray> encryptedCodes;
     QVector<QPushButton*> promoCard;
-    QVector<QString> promoCodeArray;
+    QByteArray encryptionKey;
 
     void initializePromoCodes();
     void appendNewPromoCode();
     QString createRandomCode();
+
+
+    QByteArray encrypter(const QString &promoCode);
+    QString decrypter(const QByteArray &encryptedCode);
+    QByteArray generateKey(const QString &pin);
 };
 #endif // MAINWINDOW_H
