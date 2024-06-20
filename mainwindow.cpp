@@ -54,8 +54,6 @@ void MainWindow::initializePromoCodes() // Инициализация карто
 }
 
 
-
-
 // Шифрование промокода
 QByteArray MainWindow::encrypter(const QString &promoCode)
 {
@@ -73,14 +71,12 @@ QByteArray MainWindow::encrypter(const QString &promoCode)
 
     encryptedCode.resize(promoCode.size() + AES_BLOCK_SIZE);
 
-    // Инициализируем шифрование
     if (1 != EVP_EncryptInit_ex(ctx, EVP_aes_256_ecb(), NULL, reinterpret_cast<const unsigned char*>(encryptionKey.data()), iv)) {
         // Обработка ошибки инициализации
         EVP_CIPHER_CTX_free(ctx);
         return QByteArray();
     }
 
-    // Обновляем буфер с зашифрованными данными
     if (1 != EVP_EncryptUpdate(ctx, reinterpret_cast<unsigned char*>(encryptedCode.data()), &len, reinterpret_cast<const unsigned char*>(promoCode.toUtf8().data()), promoCode.size())) {
         // Обработка ошибки обновления
         EVP_CIPHER_CTX_free(ctx);
@@ -88,7 +84,6 @@ QByteArray MainWindow::encrypter(const QString &promoCode)
     }
     ciphertext_len = len;
 
-    // Завершаем шифрование
     if (1 != EVP_EncryptFinal_ex(ctx, reinterpret_cast<unsigned char*>(encryptedCode.data()) + len, &len)) {
         // Обработка ошибки завершения
         EVP_CIPHER_CTX_free(ctx);
@@ -117,14 +112,12 @@ QString MainWindow::decrypter(const QByteArray &encryptedCode)
 
     decryptedCode.resize(encryptedCode.size());
 
-    // Инициализируем дешифрование
     if (1 != EVP_DecryptInit_ex(ctx, EVP_aes_256_ecb(), NULL, reinterpret_cast<const unsigned char*>(encryptionKey.data()), iv)) {
         // Обработка ошибки инициализации
         EVP_CIPHER_CTX_free(ctx);
         return QString();
     }
 
-    // Обновляем буфер с расшифрованными данными
     if (1 != EVP_DecryptUpdate(ctx, reinterpret_cast<unsigned char*>(decryptedCode.data()), &len, reinterpret_cast<const unsigned char*>(encryptedCode.data()), encryptedCode.size())) {
         // Обработка ошибки обновления
         EVP_CIPHER_CTX_free(ctx);
@@ -132,7 +125,6 @@ QString MainWindow::decrypter(const QByteArray &encryptedCode)
     }
     plaintext_len = len;
 
-    // Завершаем дешифрование
     if (1 != EVP_DecryptFinal_ex(ctx, reinterpret_cast<unsigned char*>(decryptedCode.data()) + len, &len)) {
         // Обработка ошибки завершения
         EVP_CIPHER_CTX_free(ctx);
@@ -186,10 +178,12 @@ void MainWindow::appendNewPromoCode() // Добавление новой кар�
     QString newCode = createRandomCode();
 
     QByteArray encryptedText = encrypter(newCode);
+    qDebug() << "*** encryptedText ***" << encryptedText;
+
     encryptedCodes.append(encryptedText);
 
-    QPushButton *newPromoCard = new QPushButton("XXXX");
-    newPromoCard->setFixedSize(200, 100);
+    QLabel *newPromoCard = new QLabel("XXXX");
+    newPromoCard->setFixedSize(100, 50);
     newPromoCard->setStyleSheet("background-color: lightgray; border: 1px solid black;");
 
     int row = promoCard.size() / 4;
@@ -209,7 +203,12 @@ void MainWindow::revealPromoCode() // Показать промокод на к�
 {
     int randomIndex = QRandomGenerator::global()->bounded(promoCard.size());
 
-    QString decryptedText = decrypter(encryptedCodes[randomIndex]);
+    QString decryptedText;
+    for (int i = 0; i < 2; ++i) {
+        decryptedText = decrypter(encryptedCodes[randomIndex]);
+    }
+
+    qDebug() << "*** decryptedText ***" << decryptedText;
     promoCard[randomIndex]->setText(decryptedText);
     promoCard[randomIndex]->setStyleSheet("color:blue");
 
